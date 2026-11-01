@@ -1,0 +1,210 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=no"><title>둥둥온천 | 오늘은 아무것도 하지 않아도 괜찮아</title><style>
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#aac8bf;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;color:#fff;touch-action:none}canvas{display:block}#top{position:absolute;top:16px;left:16px;right:16px;display:flex;align-items:center;justify-content:space-between;pointer-events:none;gap:10px}.pill{pointer-events:auto;border:1px solid #ffffff55;border-radius:24px;padding:10px 15px;background:#354d45b8;backdrop-filter:blur(9px);font-size:13px;box-shadow:0 4px 18px #0001}.pill b{font-size:16px}#subtitle{position:absolute;top:72px;left:50%;transform:translateX(-50%);white-space:nowrap;color:#fdfaf4;background:#304640aa;padding:9px 17px;border-radius:30px;font-size:12px}#toolbar{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:9px;background:#283d38b9;border:1px solid #ffffff4d;border-radius:26px;padding:10px;backdrop-filter:blur(10px);max-width:calc(100vw - 16px)}button{cursor:pointer;color:#fff;border:1px solid #ffffff3a;background:#ffffff24;border-radius:18px;padding:11px 14px;font-size:13px;white-space:nowrap}button:hover,button.selected{background:#f4e7c5;color:#374c43}#tip{position:absolute;bottom:104px;left:50%;transform:translateX(-50%);font-size:12px;color:#fff;background:#28473eaa;border-radius:20px;padding:8px 13px;text-align:center;white-space:nowrap}#joystick{position:absolute;bottom:120px;left:28px;width:112px;height:112px;border:2px solid #fff7;border-radius:50%;background:#243d383b;display:none;touch-action:none}#stick{width:48px;height:48px;position:absolute;top:30px;left:30px;background:#ffffffb0;border-radius:50%}#toast{position:absolute;top:118px;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:20px;background:#324c41cc;white-space:nowrap;font-size:13px;opacity:0;transition:opacity .25s}#intro{position:absolute;inset:0;background:#1f352b96;display:flex;align-items:center;justify-content:center;z-index:6;backdrop-filter:blur(5px)}#panel{max-width:340px;margin:18px;border-radius:24px;background:#f5eada;color:#4b604c;padding:28px;text-align:center;box-shadow:0 14px 50px #0004}#panel h1{font-size:31px;margin:6px 0}#panel p{font-size:14px;line-height:1.8}#panel button{background:#71876a;padding:14px 29px;font-size:16px;margin-top:12px}#scrub{background:#e8c59a;color:#433729;display:none}#scrub:disabled{opacity:.6;cursor:not-allowed}#toolbar{overflow-x:auto;scrollbar-width:none}#status{position:absolute;bottom:12px;right:14px;color:#fff9;font-size:11px}@media(max-width:700px){#joystick{display:block}#toolbar{bottom:18px;gap:4px;padding:7px}#toolbar button{padding:10px 9px;font-size:11px}#tip{bottom:93px;font-size:10px}#subtitle{top:67px;font-size:10px}#top{top:10px;left:9px;right:9px}.pill{padding:8px 10px;font-size:11px}}
+</style></head><body><div id="top"><div class="pill"><b>♨ 둥둥온천</b> · 자연 노천탕</div><div class="pill">🦫 <span id="count">1</span>마리 입욕 중 <button id="sound" aria-label="물소리 켜기">🔇</button> <button id="testSound" title="효과음 테스트" aria-label="효과음 테스트">🔔 소리 테스트</button></div></div><div id="subtitle">오늘은 아무것도 하지 않아도 괜찮아.</div><div id="toast"></div><div id="tip">WASD / 방향키 이동 · 모바일은 왼쪽 조이스틱</div><div id="joystick"><div id="stick"></div></div><div id="toolbar"><button data-act="soak">♨️ 입욕</button><button data-act="float">🫧 둥둥</button><button data-act="sleep">💤 졸기</button><button id="orange">🍊 귤 올리기</button><button data-act="splash">💦 물장구</button><button data-act="wave">👋 인사</button><button id="scrub" title="가까운 카피바라 등 밀어주기">🧼 등 밀어주기</button></div><div id="status">3D 로우폴리 · 동시 접속 지원</div><div id="intro"><div id="panel"><div style="font-size:45px">🦫♨️🍊</div><h1>둥둥온천</h1><p>오늘은 카피바라가 되어 쉬어가세요.<br>다른 카피바라들과 조용히 온천을 즐겨요.<br>아무것도 하지 않아도 괜찮아요.</p><button id="start">온천 입장하기</button></div></div>
+<script type="module">
+import * as THREE from 'https://esm.sh/three@0.170.0';
+import {io} from 'https://cdn.socket.io/4.8.1/socket.io.esm.min.js';
+const scene=new THREE.Scene();scene.background=new THREE.Color('#b8d8cd');scene.fog=new THREE.Fog('#b8d8cd',23,58);
+const camera=new THREE.PerspectiveCamera(44,innerWidth/innerHeight,.1,120);camera.position.set(0,12,19);camera.lookAt(0,0,0);
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.prepend(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xfff4dd,0x60887d,2.25));const sun=new THREE.DirectionalLight(0xffe5b5,2.5);sun.position.set(-8,18,8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-25;sun.shadow.camera.right=25;sun.shadow.camera.top=25;sun.shadow.camera.bottom=-25;scene.add(sun);
+const mat=(color,roughness=1,opacity=1)=>new THREE.MeshStandardMaterial({color,roughness,transparent:opacity<1,opacity});const stone=mat('#97928a'),wood=mat('#8c6f56'),grass=mat('#86a48a'),water=mat('#8ad7cf',.33,.8);
+function cube(x,y,z,w,h,d,m,round=false){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.receiveShadow=true;o.castShadow=true;scene.add(o);return o}
+function ball(parent,x,y,z,sx,sy,sz,m){const o=new THREE.Mesh(new THREE.SphereGeometry(1,12,9),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;parent.add(o);return o}
+function cylinder(x,y,z,rt,rb,h,m,sides=9){const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,sides),m);o.position.set(x,y,z);o.castShadow=true;scene.add(o);return o}
+cube(0,-.65,0,55,.5,50,grass);cube(0,-.28,0,19,.2,12,stone);cube(0,-.08,0,17.5,.13,10.5,water);const waterSurfaceY=0;
+for(let i=-9;i<=9;i+=1.2){cylinder(i,-.13,-5.5,.63,.67,.42,stone,7);cylinder(i,-.13,5.5,.64,.68,.42,stone,7)}for(let j=-4.8;j<=4.8;j+=1.1){cylinder(-9,-.13,j,.65,.7,.45,stone,7);cylinder(9,-.13,j,.65,.7,.45,stone,7)}
+for(let i=0;i<70;i++){const x=(Math.random()-.5)*48,z=(Math.random()-.5)*41;if(Math.abs(x)<12&&Math.abs(z)<8)continue;const h=1.6+Math.random()*2.8;cylinder(x,h/2-.4,z,.14,.24,h,wood,6);const leafy=mat(['#759a7b','#688d73','#83a487'][i%3]);const crown=new THREE.Mesh(new THREE.ConeGeometry(.95+Math.random()*.6,2.8,6),leafy);crown.position.set(x,h+0.45,z);crown.castShadow=true;scene.add(crown)}
+for(let k=0;k<35;k++){let x=(Math.random()-.5)*50,z=(Math.random()-.5)*45;if(Math.abs(x)<11&&Math.abs(z)<7)continue;const r=.2+Math.random()*.75;const b=new THREE.Mesh(new THREE.DodecahedronGeometry(r,0),stone);b.position.set(x,-.28,z);b.rotation.set(Math.random(),Math.random(),Math.random());scene.add(b)}
+// Capybara v1.1: long snout, broad head, small round ears and distinctly placed eyes.
+const black=mat('#211c19'),nose=mat('#463026'),orangeM=mat('#eaa73b'),leaf=mat('#70a16a'),dropletMaterial=new THREE.MeshBasicMaterial({color:'#d8fff6',transparent:true,opacity:.87,depthWrite:false});
+const splashes=[];const hearts=[];
+function makeHearts(x,z){for(let i=0;i<5;i++){const spriteCanvas=document.createElement('canvas');spriteCanvas.width=64;spriteCanvas.height=64;const ctx=spriteCanvas.getContext('2d');ctx.font='44px system-ui';ctx.fillText(i%2?'♡':'♥',8,47);const tex=new THREE.CanvasTexture(spriteCanvas);const material=new THREE.SpriteMaterial({map:tex,transparent:true,color:i%2?'#fff3dc':'#ffa8a7',depthWrite:false});const o=new THREE.Sprite(material);o.position.set(x+(Math.random()-.5)*.8,1.2,z+(Math.random()-.5)*.8);o.scale.set(.43,.43,1);scene.add(o);hearts.push({mesh:o,life:1.4,velocity:0.5+Math.random()*.3})}}
+function makeSplash(x,z){for(let i=0;i<9;i++){const o=new THREE.Mesh(new THREE.SphereGeometry(.055+Math.random()*.035,6,5),dropletMaterial.clone());o.position.set(x+(Math.random()-.5)*.55,.1,z+(Math.random()-.5)*.5);scene.add(o);splashes.push({mesh:o,vx:(Math.random()-.5)*2.4,vy:1.2+Math.random()*1.9,vz:(Math.random()-.5)*2.4,life:.65,maxLife:.65});}}
+function capybara(color){
+ const root=new THREE.Group();scene.add(root);
+ const pivot=new THREE.Group();root.add(pivot);
+ const fur=mat(color),muzzleFur=mat('#c99e74'),belly=mat('#d9b58d'),innerEar=mat('#925b43');
+ const faceBlack=new THREE.MeshStandardMaterial({color:0x241a15,roughness:.95});
+ const ears=[],eyes=[];
+ // A soft, low-poly, squat, pear-shaped capybara, not a bear.
+ ball(pivot,0,.65,.16,.93,.78,.98,fur);
+ ball(pivot,0,.46,-.28,.64,.48,.54,belly);
+ ball(pivot,0,.94,-.43,.67,.58,.67,fur);
+ // Wide blunt muzzle projects forward, signature capybara silhouette.
+ ball(pivot,0,.76,-1.05,.47,.38,.35,muzzleFur);
+ for(const side of [-1,1]){
+   const ear=ball(pivot,side*.43,1.45,-.55,.12,.13,.10,fur);ears.push(ear);
+   ball(pivot,side*.43,1.46,-.64,.064,.07,.03,innerEar);
+   // BOTH eyes visible from the front: very small black oval dots.
+   const eye=ball(pivot,side*.43,1.105,-.92,.055,.055,.054,faceBlack);eyes.push(eye);
+   ball(pivot,side*.66,.44,-.03,.12,.22,.14,fur);
+   for(const z of [-.43,.57])ball(pivot,side*.42,.08,z,.18,.15,.21,fur);
+ }
+ // The muzzle is an ellipsoid centered at (0,.76,-1.05), radii (.47,.38,.35).
+ // Trace the nose over its curved FRONT SURFACE so it never floats from side view.
+ const lineMat=new THREE.MeshStandardMaterial({color:0x30211b,roughness:1});
+ function muzzleSurface(x,y){
+   const r=1-(x*x)/(.47*.47)-((y-.76)*(y-.76))/(.38*.38);
+   return -1.05-.35*Math.sqrt(Math.max(0,r))-.008;
+ }
+ function noseStroke(x1,y1,x2,y2){
+   // A curved line follows the muzzle, instead of a flat decal floating in front.
+   const n=12;
+   for(let i=0;i<n;i++){
+     const t=i/n,u=(i+1)/n;
+     const a=new THREE.Vector3(x1+(x2-x1)*t,y1+(y2-y1)*t,0);
+     const b=new THREE.Vector3(x1+(x2-x1)*u,y1+(y2-y1)*u,0);
+     a.z=muzzleSurface(a.x,a.y);b.z=muzzleSurface(b.x,b.y);
+     const dir=new THREE.Vector3().subVectors(b,a);
+     const mesh=new THREE.Mesh(new THREE.CylinderGeometry(.014,.014,dir.length()+.004,5),lineMat);
+     mesh.position.copy(a).add(b).multiplyScalar(.5);
+     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+     pivot.add(mesh);
+   }
+ }
+ // Upright V: two upper tips connect to ONE lower tip. The stem continues down.
+ noseStroke(-.105,.925,0,.835);
+ noseStroke(.105,.925,0,.835);
+ noseStroke(0,.835,0,.615);
+ const fruit=new THREE.Group();pivot.add(fruit);
+ ball(fruit,0,1.64,-.47,.205,.19,.205,orangeM);
+ ball(fruit,.04,1.81,-.47,.09,.035,.07,leaf);fruit.visible=false;
+ const zzz=document.createElement('canvas');zzz.width=256;zzz.height=128;
+ let c=zzz.getContext('2d');c.font='bold 51px Arial';c.fillStyle='#ffffff';c.fillText('Z z z',20,72);
+ const zz=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(zzz),transparent:true}));
+ zz.position.set(.8,1.8,0);zz.scale.set(1.25,.62,1);root.add(zz);zz.visible=false;
+ return {root,pivot,fruit,zz,ears,eyes,action:'idle',orange:false,phase:Math.random()*10,target:new THREE.Vector3(),actionAt:performance.now(),snoreAt:0,receiveHeartAt:0,receivingUntil:0,scrubbingUntil:0};
+}
+const players=new Map();let myId=null,my=null,count=0;let socket;let online=false;let nextScrubAt=0;const scrubButton=document.getElementById('scrub');
+function nearestCapybara(){if(!my)return null;let winner=null,dist=2.8;for(const [id,p] of players){if(id===myId)continue;const d=my.root.position.distanceTo(p.root.position);if(d<dist){winner=id;dist=d}}return winner}
+scrubButton.addEventListener('click',()=>{const id=nearestCapybara();if(!id){toast('다른 카피바라에게 가까이 가보세요!');return}if(performance.now()<nextScrubAt)return;nextScrubAt=performance.now()+3600;socket?.emit('scrub',{targetId:id});scrubButton.disabled=true;setTimeout(()=>scrubButton.disabled=false,3600)});
+function scrubAnimation(e){const a=players.get(e.from),b=players.get(e.to);if(!a||!b)return;const now=performance.now();a.scrubbingUntil=now+1900;b.receivingUntil=now+2200;b.receiveHeartAt=now;makeHearts(b.root.position.x,b.root.position.z);if(e.from===myId||e.to===myId){playActionSound('scrub');toast(e.to===myId?'등이 뽀득뽀득! 기분 좋아요 💗':'쓱싹쓱싹! 친구의 등을 밀어줬어요 🧼')}}
+function createPlayer(p){const ob=capybara(p.color||'#b88257');ob.root.position.set(p.x||0,0,p.z||0);ob.target.copy(ob.root.position);ob.root.rotation.y=p.rot??Math.PI;ob.fruit.visible=!!p.orange;players.set(p.id,ob);ob.action=p.action||'idle';return ob}
+function setAction(action){if(!my)return;playActionSound(action);my.action=action;my.actionAt=performance.now();if(action==='splash')makeSplash(my.root.position.x,my.root.position.z);if(action==='sleep')my.snoreAt=performance.now()+1200;document.querySelectorAll('[data-act]').forEach(b=>b.classList.toggle('selected',b.dataset.act===action));socket?.emit('act',{action,orange:my.orange});toast({soak:'따뜻한 물에 몸을 담갔어요 ♨',float:'둥둥... 아무 생각도 하지 않아요',sleep:'잠깐 눈을 감아봐요',splash:'찰랑! 물장구를 쳤어요',wave:'옆 친구에게 인사했어요 👋'}[action]||'');}
+const toastBox=document.getElementById('toast');let toastTime=0;function toast(s){toastBox.textContent=s;toastBox.style.opacity=1;toastTime=performance.now()+2200}
+function connect(){socket=io({reconnectionAttempts:6});socket.on('connect',()=>{online=true;document.getElementById('status').textContent='🟢 실제 동시 접속 연결됨'});socket.on('connect_error',()=>{online=false;document.getElementById('status').textContent='⚠️ 서버 연결 필요: npm start';});socket.on('init',d=>{players.forEach(x=>scene.remove(x.root));players.clear();myId=d.id;d.players.forEach(createPlayer);my=players.get(myId);});socket.on('joined',p=>createPlayer(p));socket.on('moved',p=>{const o=players.get(p.id);if(o){o.target.set(p.x,0,p.z);o.root.userData.targetRot=p.rot;}});socket.on('acted',p=>{const o=players.get(p.id);if(o){if(p.action==='splash')makeSplash(o.root.position.x,o.root.position.z);o.action=p.action;o.actionAt=performance.now();o.orange=p.orange;o.fruit.visible=p.orange;}});socket.on('scrubbed',scrubAnimation);socket.on('left',id=>{const o=players.get(id);if(o){scene.remove(o.root);players.delete(id)}});socket.on('count',n=>{count=n;document.getElementById('count').textContent=n});socket.on('room-full',()=>toast('온천이 가득 찼어요. 잠시 후 다시 들어와 주세요.'))}
+document.getElementById('start').onclick=()=>{document.getElementById('intro').style.display='none';ensureEffectsAudio();connect();toast('🔔 소리 테스트 버튼으로 효과음을 확인해 보세요')};document.getElementById('orange').onclick=()=>{if(!my)return;playActionSound(my.orange?'removeOrange':'orange');my.orange=!my.orange;my.fruit.visible=my.orange;my.actionAt=performance.now();document.getElementById('orange').classList.toggle('selected',my.orange);socket?.emit('act',{action:my.action,orange:my.orange});toast(my.orange?'머리에 귤을 올렸어요 🍊':'귤을 내려놓았어요')};document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>setAction(b.dataset.act));
+const keys=new Set();addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase())});addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));const joy=document.getElementById('joystick'),stick=document.getElementById('stick');let jx=0,jz=0;function joystick(e){const r=joy.getBoundingClientRect(),x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2),d=Math.max(1,Math.hypot(x,y)),v=Math.min(1,d/40);jx=x/d*v;jz=y/d*v;stick.style.transform=`translate(${jx*31}px,${jz*31}px)`}joy.addEventListener('pointerdown',e=>{joy.setPointerCapture(e.pointerId);joystick(e)});joy.addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='touch')joystick(e)});for(const ev of ['pointerup','pointercancel'])joy.addEventListener(ev,()=>{jx=jz=0;stick.style.transform='none'});
+// One-shot interaction effects are independent of the ambient water toggle.
+let fxCtx=null, fxMaster=null;
+function ensureEffectsAudio(){
+ try{
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return false;
+  if(!fxCtx || fxCtx.state==='closed'){fxCtx=new AC();fxMaster=fxCtx.createGain();fxMaster.gain.value=1.8;fxMaster.connect(fxCtx.destination)}
+  if(fxCtx.state==='suspended')fxCtx.resume().catch(err=>console.warn('Audio activation:',err));
+  return true;
+ }catch(err){console.warn('Audio initialization:',err);return false}
+}
+function playActionSound(kind){
+ try{
+  if(!ensureEffectsAudio())return;
+  const t=fxCtx.currentTime+.01;
+  function tone(freq,endFreq,duration,volume,type='sine',delay=0){
+   const osc=fxCtx.createOscillator(), gain=fxCtx.createGain(),start=t+delay;
+   osc.type=type;osc.frequency.setValueAtTime(freq,start);
+   osc.frequency.exponentialRampToValueAtTime(Math.max(35,endFreq),start+duration);
+   gain.gain.setValueAtTime(.0001,start);
+   gain.gain.exponentialRampToValueAtTime(Math.max(.001,volume),start+.009);
+   gain.gain.exponentialRampToValueAtTime(.0001,start+duration);
+   osc.connect(gain);gain.connect(fxMaster);osc.start(start);osc.stop(start+duration+.03);
+  }
+  function splash(duration=.33,vol=.25,delay=0){
+   const sampleCount=Math.ceil(fxCtx.sampleRate*(duration+.04));
+   const buffer=fxCtx.createBuffer(1,sampleCount,fxCtx.sampleRate), data=buffer.getChannelData(0);
+   for(let i=0;i<sampleCount;i++)data[i]=Math.random()*2-1;
+   const noise=fxCtx.createBufferSource(),low=fxCtx.createBiquadFilter(),high=fxCtx.createBiquadFilter(),gain=fxCtx.createGain();
+   noise.buffer=buffer;low.type='lowpass';low.frequency.value=1700;high.type='highpass';high.frequency.value=300;
+   const st=t+delay;
+   gain.gain.setValueAtTime(.0001,st);
+   gain.gain.exponentialRampToValueAtTime(vol,st+.028);
+   gain.gain.exponentialRampToValueAtTime(.0001,st+duration);
+   noise.connect(low);low.connect(high);high.connect(gain);gain.connect(fxMaster);
+   noise.start(st);noise.stop(st+duration+.04);
+  }
+  switch(kind){
+   case 'test':tone(520,740,.24,.22,'sine');tone(680,1050,.25,.20,'triangle',.18);splash(.25,.22,.28);break;
+   case 'orange':tone(680,940,.12,.15,'sine');tone(1050,1290,.11,.12,'sine',.095);break;
+   case 'removeOrange':tone(780,450,.16,.12);break;
+   case 'splash':splash(.34,.34);tone(410,180,.20,.07,'sine',.035);splash(.21,.14,.14);break;
+   case 'soak':splash(.36,.14);tone(280,180,.3,.055);break;
+   case 'float':splash(.23,.09);tone(390,450,.30,.05);break;
+   case 'sleep':tone(540,350,.48,.075);break;
+   case 'wave':tone(570,780,.17,.08);break;
+   case 'scrub':splash(.15,.11);tone(420,620,.16,.085,'triangle',.06);splash(.15,.11,.18);tone(560,700,.18,.085,'triangle',.24);break;
+   case 'snore':tone(155,110,.38,.038,'sine');tone(110,85,.24,.025,'sine',.22);break;
+  }
+ }catch(error){console.warn('효과음을 재생하지 못했습니다:',error)}
+}
+let audioCtx=null, audioNodes=[];
+const soundButton=document.getElementById('sound');
+soundButton.title='물소리 켜기/끄기';
+function stopWaterSound(){
+ for(const node of audioNodes){try{node.stop?.()}catch{}try{node.disconnect()}catch{}}
+ audioNodes=[];if(audioCtx){audioCtx.close().catch(()=>{});audioCtx=null}
+ soundButton.textContent='🔇';soundButton.setAttribute('aria-label','물소리 켜기');
+}
+async function startWaterSound(){
+ const AC=window.AudioContext||window.webkitAudioContext;
+ if(!AC){toast('이 브라우저는 사운드를 지원하지 않아요');return}
+ try{
+  audioCtx=new AC();await audioCtx.resume();
+  const length=audioCtx.sampleRate*3;
+  const buffer=audioCtx.createBuffer(1,length,audioCtx.sampleRate);
+  const channel=buffer.getChannelData(0);
+  for(let i=0;i<length;i++)channel[i]=Math.random()*2-1;
+  const source=audioCtx.createBufferSource();source.buffer=buffer;source.loop=true;
+  const lowpass=audioCtx.createBiquadFilter();lowpass.type='lowpass';lowpass.frequency.value=730;
+  const highpass=audioCtx.createBiquadFilter();highpass.type='highpass';highpass.frequency.value=120;
+  const gain=audioCtx.createGain();gain.gain.value=.12;
+  // Slow, subtle wash so the sound suggests flowing water rather than static.
+  const lfo=audioCtx.createOscillator();lfo.frequency.value=.28;
+  const depth=audioCtx.createGain();depth.gain.value=.032;
+  lfo.connect(depth);depth.connect(gain.gain);
+  source.connect(lowpass);lowpass.connect(highpass);highpass.connect(gain);gain.connect(audioCtx.destination);
+  source.start();lfo.start();audioNodes=[source,lfo,lowpass,highpass,gain,depth];
+  soundButton.textContent='🔊';soundButton.setAttribute('aria-label','물소리 끄기');toast('물 흐르는 소리를 켰어요 🔊');
+ }catch(e){console.error('Audio error',e);stopWaterSound();toast('소리를 켤 수 없어요. 브라우저 음소거를 확인해 주세요.')}
+}
+soundButton.onclick=()=>{ensureEffectsAudio();if(audioCtx)stopWaterSound();else startWaterSound()};
+document.getElementById('testSound').onclick=()=>{if(!ensureEffectsAudio()){toast('브라우저가 오디오를 지원하지 않아요');return}playActionSound('test');toast('🔔 띠링 + 물소리! 소리가 들리나요?')};
+let last=performance.now(),send=0;function animate(t){requestAnimationFrame(animate);const dt=Math.min(.05,(t-last)/1000);last=t;
+ if(my){let dx=Number(keys.has('d')||keys.has('arrowright'))-Number(keys.has('a')||keys.has('arrowleft'))+jx;let dz=Number(keys.has('s')||keys.has('arrowdown'))-Number(keys.has('w')||keys.has('arrowup'))+jz;const mag=Math.hypot(dx,dz);if(mag>.1){dx/=Math.max(1,mag);dz/=Math.max(1,mag);my.root.position.x=THREE.MathUtils.clamp(my.root.position.x+dx*dt*3.2,-15,15);my.root.position.z=THREE.MathUtils.clamp(my.root.position.z+dz*dt*3.2,-11,12);my.root.rotation.y=Math.atan2(-dx,-dz);my.target.copy(my.root.position);if(t-send>60){socket?.emit('move',{x:my.root.position.x,z:my.root.position.z,rot:my.root.rotation.y});send=t}}}
+ const near=nearestCapybara();scrubButton.style.display=near?'inline-block':'none';scrubButton.disabled=performance.now()<nextScrubAt;
+ for(let i=hearts.length-1;i>=0;i--){const h=hearts[i];h.life-=dt;h.mesh.position.y+=dt*h.velocity;h.mesh.material.opacity=Math.min(1,h.life);if(h.life<=0){scene.remove(h.mesh);h.mesh.material.map.dispose();h.mesh.material.dispose();hearts.splice(i,1)}}
+ for(let i=splashes.length-1;i>=0;i--){const p=splashes[i];p.life-=dt;p.vy-=dt*5;p.mesh.position.x+=p.vx*dt;p.mesh.position.y+=p.vy*dt;p.mesh.position.z+=p.vz*dt;p.mesh.material.opacity=Math.max(0,p.life/p.maxLife)*.87;if(p.life<=0||p.mesh.position.y<-.12){scene.remove(p.mesh);p.mesh.geometry.dispose();p.mesh.material.dispose();splashes.splice(i,1)}}
+ for(const [id,o] of players){if(id!==myId){o.root.position.lerp(o.target,Math.min(1,dt*8));if(Number.isFinite(o.root.userData.targetRot))o.root.rotation.y=o.root.userData.targetRot}const inWater=Math.abs(o.root.position.x)<8.5&&Math.abs(o.root.position.z)<5;const inBath=inWater&&o.action!=='idle';o.phase+=dt;const bob=inBath?-.2+Math.sin(o.phase*2.8)*.065:Math.sin(o.phase*2.2)*.012;o.pivot.position.y=bob;o.pivot.rotation.z=o.action==='float'?.13*Math.sin(o.phase):0;o.zz.visible=o.action==='sleep';
+ const age=(t-o.actionAt)/1000;const scrubbing=(o.scrubbingUntil||0)>t;const receiving=(o.receivingUntil||0)>t;
+ // Each behavior animates the animal rather than only changing the selected button.
+ if(o.action==='sleep'){
+   o.pivot.rotation.x=.065+Math.sin(o.phase*1.8)*.022;
+   o.pivot.position.y+=Math.sin(o.phase*1.8)*.022;
+   if(id===myId&&t>o.snoreAt){playActionSound('snore');o.snoreAt=t+3400;}
+ }else if(o.action==='wave'){
+   o.pivot.rotation.z=Math.sin(o.phase*9)*.10;
+   o.pivot.rotation.y=Math.sin(o.phase*6)*.10;
+ }else if(o.action==='splash'){
+   o.pivot.rotation.x=age<.8?Math.sin(age*19)*.13:0;
+   o.pivot.position.y+=age<.8?Math.abs(Math.sin(age*17))*.12:0;
+ }else if(o.action==='float'){
+   o.pivot.rotation.x=.09+Math.sin(o.phase*2)*.055;
+ }else if(o.action==='soak'){
+   o.pivot.position.y-=.1;o.pivot.rotation.x=.035;
+ }
+ if(scrubbing){o.pivot.rotation.z=Math.sin(t*.027)*.13;o.pivot.rotation.y=Math.sin(t*.023)*.11;o.ears.forEach((ear,i)=>ear.rotation.z=Math.sin(t*.035+i)*.14)}
+ if(receiving){o.pivot.position.y+=Math.abs(Math.sin(t*.013))*.045+.015;o.pivot.rotation.x=-.03+Math.sin(t*.009)*.02;o.pivot.rotation.z+=Math.sin(t*.016)*.04;if(t>(o.receiveHeartAt||0)){makeHearts(o.root.position.x,o.root.position.z);o.receiveHeartAt=t+420;}}
+ if(o.action!=='sleep'){
+   o.pivot.rotation.x=(o.action==='float'||o.action==='splash'||o.action==='soak')?o.pivot.rotation.x:0;
+ }else{o.pivot.rotation.z=0;}
+ if(o.action!=='wave'&&o.action!=='float'&&!scrubbing)o.pivot.rotation.z=0;
+ if(o.action!=='wave'&&!scrubbing)o.pivot.rotation.y=0;
+ // Keep each eye's original tiny mesh scale: 1 here caused giant black spikes.
+ for(let i=0;i<o.eyes.length;i++)o.eyes[i].scale.y=(o.action==='sleep'||receiving)? .006 : .065;
+ for(let i=0;i<o.ears.length;i++)o.ears[i].rotation.z=Math.sin(o.phase*5+i*1.5)*(o.action==='wave' ? .19 : (receiving ? .12 : .055));
+ if(o.fruit.visible){const jump=Math.max(0,1-Math.abs(age-.22)/.22);o.fruit.position.y=.12*jump+Math.sin(o.phase*2)*.015;o.fruit.rotation.z=Math.sin(o.phase*3)*.045;}else{o.fruit.position.y=0;}
+ }
+ if(my){const want=new THREE.Vector3(my.root.position.x+0,10,my.root.position.z+17);camera.position.lerp(want,Math.min(1,dt*2));camera.lookAt(my.root.position.x,0,my.root.position.z-1)}else{camera.lookAt(0,0,0)}
+ if(toastTime&&t>toastTime){toastTime=0;toastBox.style.opacity=0}renderer.render(scene,camera)}requestAnimationFrame(animate);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script></body></html>
